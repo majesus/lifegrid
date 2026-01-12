@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+    <!-- Iconos app -->
+    <link rel="icon" sizes="192x192" href="icon-lifegrid.png">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#000000">
+
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu Vida en Semanas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ajustes específicos para inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        /* Tipografía base */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white font-sans flex flex-col items-center py-12 px-4 selection:bg-green-900">
+
+    <!-- Header Minimalista -->
+    <header class="w-full max-w-4xl flex justify-between items-end mb-10 border-b border-gray-900 pb-6">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight text-white mb-1">Tu Vida en Semanas</h1>
+            <p id="stats-text" class="text-xs text-gray-500 font-medium tracking-widest uppercase">
+                <!-- Se llenará con JS -->
+                Calculando...
+            </p>
+        </div>
+        
+        <!-- Controles Compactos -->
+        <div class="flex gap-6 text-sm">
+            <div class="flex flex-col items-end">
+                <label class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Nacimiento</label>
+                <input 
+                    type="number" 
+                    id="birth-input"
+                    value="1990"
+                    class="bg-gray-900 text-white border border-gray-800 rounded px-2 py-1 w-20 text-right focus:border-green-500 focus:outline-none transition-colors"
+                />
+            </div>
+            <div class="flex flex-col items-end">
+                <label class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Esperanza</label>
+                <input 
+                    type="number" 
+                    id="expectancy-input"
+                    value="85"
+                    class="bg-gray-900 text-white border border-gray-800 rounded px-2 py-1 w-20 text-right focus:border-green-500 focus:outline-none transition-colors"
+                />
+            </div>
+        </div>
+    </header>
+
+    <!-- Grid Container -->
+    <div class="relative w-full max-w-4xl">
+        
+        <!-- Tooltip Flotante -->
+        <div id="tooltip" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs px-3 py-1 rounded-full shadow-lg border border-gray-700 z-50 pointer-events-none transition-opacity duration-200 opacity-0 text-white">
+            <!-- Texto del tooltip -->
+        </div>
+
+        <!-- El Grid Principal -->
+        <div 
+            id="life-grid"
+            class="grid gap-[2px] sm:gap-[3px]"
+            style="grid-template-columns: repeat(52, minmax(0, 1fr));"
+        >
+            <!-- Los puntos se generarán aquí -->
+        </div>
+        
+        <!-- Ejes / Etiquetas sutiles -->
+        <div class="absolute -left-8 top-0 h-full flex flex-col justify-between text-[8px] text-gray-500 font-mono py-1">
+            <span>0</span>
+            <span>AÑOS</span>
+            <span id="expectancy-label">85</span>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-gray-500 text-xs">
+        <p class="mb-2">Cada punto es una semana. Cada fila es un año.</p>
+        <div class="flex justify-center gap-4 text-[10px] uppercase tracking-widest">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-[#30D158]"></div> Vivido
+            </div>
+            <div class="flex items-center gap-2">
+                 <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div> Ahora
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-[#3A3A3C]"></div> Futuro
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        // Referencias al DOM
+        const els = {
+            grid: document.getElementById('life-grid'),
+            birthInput: document.getElementById('birth-input'),
+            expectancyInput: document.getElementById('expectancy-input'),
+            statsText: document.getElementById('stats-text'),
+            expectancyLabel: document.getElementById('expectancy-label'),
+            tooltip: document.getElementById('tooltip')
+        };
+
+        // Estado inicial
+        const state = {
+            birthYear: 1990,
+            expectancy: 85
+        };
+
+        // Función principal de renderizado
+        function renderGrid() {
+            const { birthYear, expectancy } = state;
+            
+            const totalWeeks = expectancy * 52;
+            const today = new Date();
+            const birthDate = new Date(birthYear, 0, 1);
+            
+            // Calcular semanas vividas
+            const diffTime = Math.abs(today - birthDate);
+            const weeksLived = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+
+            // Actualizar textos
+            els.statsText.textContent = `${weeksLived} semanas vividas / ${(totalWeeks - weeksLived)} restantes`;
+            els.expectancyLabel.textContent = expectancy;
+
+            // Generar HTML del Grid (Usando string builder para rendimiento)
+            let gridHTML = '';
+            
+            for (let i = 0; i < totalWeeks; i++) {
+                const isLived = i < weeksLived;
+                const isCurrentWeek = i === weeksLived;
+                const isDecade = (Math.floor(i / 52) + 1) % 10 === 0 && (i % 52 === 51);
+                
+                // Determinar clases base
+                let classes = 'aspect-square rounded-full transition-all duration-300 ';
+                
+                if (isLived) {
+                    classes += 'bg-[#30D158] shadow-[0_0_2px_rgba(48,209,88,0.3)] ';
+                } else {
+                    // Nota: añadimos una clase específica para el hover con JS si fuera necesario, 
+                    // pero Tailwind hover: funciona bien aquí.
+                    classes += 'bg-[#3A3A3C] hover:bg-gray-500 ';
+                }
+
+                if (isCurrentWeek) {
+                    classes += 'animate-pulse bg-white scale-150 shadow-[0_0_10px_rgba(255,255,255,0.9)] z-10 ';
+                }
+
+                if (isDecade && !isLived) {
+                    classes += 'opacity-50 ';
+                }
+
+                // Añadimos data-index para el tooltip
+                gridHTML += `<div class="${classes}" data-index="${i}"></div>`;
+            }
+
+            els.grid.innerHTML = gridHTML;
+        }
+
+        // Manejo del Tooltip (Event Delegation para rendimiento)
+        els.grid.addEventListener('mouseover', (e) => {
+            const target = e.target;
+            const indexStr = target.getAttribute('data-index');
+            
+            if (indexStr !== null) {
+                const index = parseInt(indexStr);
+                const yearIndex = Math.floor(index / 52);
+                const weekIndex = index % 52;
+                
+                els.tooltip.textContent = `Edad: ${yearIndex} años, Semana ${weekIndex + 1}`;
+                els.tooltip.classList.remove('opacity-0');
+            }
+        });
+
+        els.grid.addEventListener('mouseout', () => {
+            els.tooltip.classList.add('opacity-0');
+        });
+
+        // Event Listeners para Inputs
+        const handleInput = (key) => (e) => {
+            const val = parseInt(e.target.value);
+            if (val && val > 0) {
+                state[key] = val;
+                // Pequeño debounce o requestAnimationFrame podría ir aquí si fuera muy lento,
+                // pero para ~4000 nodos suele ser instantáneo.
+                window.requestAnimationFrame(renderGrid);
+            }
+        };
+
+        els.birthInput.addEventListener('input', handleInput('birthYear'));
+        els.expectancyInput.addEventListener('input', handleInput('expectancy'));
+
+        // Renderizado inicial
+        renderGrid();
+
+    </script>
+</body>
+</html>
